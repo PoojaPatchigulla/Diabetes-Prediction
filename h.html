@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diabetes Prediction Model</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-to-br from-purple-100 to-blue-200 min-h-screen flex items-center justify-center p-4 font-[Poppins]">
+  <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-4xl">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-extrabold text-purple-700">Diabetes Prediction Model</h1>
+      <p class="text-md text-purple-500 font-medium mt-2">Algorithm Used: <span class="text-blue-600 font-semibold">Logistic Regression</span></p>
+    </div>
+
+    <form id="prediction-form" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div class="interactive-field">
+        <label class="label">Pregnancies</label>
+        <input name="Pregnancies" type="number" step="any" required class="input-field w-full" />
+      </div>
+      <div class="interactive-field">
+        <label class="label">Glucose</label>
+        <input name="Glucose" type="number" step="any" required class="input-field w-full" />
+      </div>
+      <div class="interactive-field">
+        <label class="label">Blood Pressure</label>
+        <input name="BloodPressure" type="number" step="any" required class="input-field w-full" />
+      </div>
+      <div class="interactive-field">
+        <label class="label">Skin Thickness</label>
+        <input name="SkinThickness" type="number" step="any" required class="input-field w-full" />
+      </div>
+      <div class="interactive-field">
+        <label class="label">Insulin</label>
+        <input name="Insulin" type="number" step="any" required class="input-field w-full" />
+      </div>
+      <div class="interactive-field">
+        <label class="label">BMI</label>
+        <input name="BMI" type="number" step="any" required class="input-field w-full" />
+      </div>
+      <div class="interactive-field">
+        <label class="label">Diabetes Pedigree Function</label>
+        <input name="DiabetesPedigreeFunction" type="number" step="any" required class="input-field w-full" />
+      </div>
+      <div class="interactive-field">
+        <label class="label">Age</label>
+        <input name="Age" type="number" step="any" required class="input-field w-full" />
+      </div>
+
+      <div class="col-span-full text-center mt-6">
+        <button id="predict-button" type="button" class="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:from-purple-700 hover:to-blue-600 transition-all duration-300">Predict</button>
+      </div>
+    </form>
+
+    <div id="result" class="mt-6 text-center text-xl font-semibold hidden"></div>
+    <div class="mt-10">
+      <canvas id="inputChart" height="100"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const coefficients = [0.25, 0.3, -0.1, 0.02, 0.05, 0.18, 0.2, 0.1];
+    const intercept = 0.5;
+    const mean = [3.8, 120, 69, 20, 80, 32, 0.5, 33];
+    const stdDev = [3.5, 31, 19, 16, 115, 7, 0.3, 11];
+
+    function normalize(input) {
+      return input.map((val, idx) => (val - mean[idx]) / stdDev[idx]);
+    }
+
+    function predictOutcome(features) {
+      const normalized = normalize(features);
+      let logOdds = intercept;
+      for (let i = 0; i < normalized.length; i++) {
+        logOdds += coefficients[i] * normalized[i];
+      }
+      const probability = 1 / (1 + Math.exp(-logOdds));
+      return { label: probability >= 0.5 ? "Diabetic" : "Non-Diabetic", probability };
+    }
+
+    document.getElementById("predict-button").addEventListener("click", () => {
+      const form = document.getElementById("prediction-form");
+      const featureValues = Array.from(form.elements)
+        .filter(el => el.tagName === "INPUT")
+        .map(el => parseFloat(el.value));
+
+      if (featureValues.some(isNaN)) {
+        alert("Please fill in all fields with valid numbers.");
+        return;
+      }
+
+      const result = predictOutcome(featureValues);
+      document.getElementById("result").classList.remove("hidden");
+      document.getElementById("result").innerHTML = `<strong>Prediction:</strong> ${result.label} (${(result.probability * 100).toFixed(2)}%)`;
+
+      drawChart(featureValues);
+    });
+
+    function drawChart(values) {
+      const ctx = document.getElementById("inputChart");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI", "DPF", "Age"],
+          datasets: [{
+            label: "Your Input",
+            data: values,
+            backgroundColor: "rgba(139, 92, 246, 0.6)",
+            borderColor: "rgba(139, 92, 246, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+  </script>
+
+  <style>
+    .input-field {
+      @apply px-5 py-3 border border-purple-300 rounded-xl bg-white text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400 transition duration-200 ease-in-out transform focus:scale-105;
+    }
+    .label {
+      @apply block mb-1 text-sm font-medium text-purple-700;
+    }
+    .interactive-field {
+      @apply flex flex-col;
+    }
+  </style>
+</body>
+</html>
